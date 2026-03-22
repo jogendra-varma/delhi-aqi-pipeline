@@ -59,8 +59,17 @@ delhi-aqi-pipeline/
 ├── dashboard/
 │   └── screenshots/
 └── README.md
+
 ## 🚧 Status
-🔄 Currently in progress — Part 1 (Foundation & Ingestion)
+✅ Part 1 — Foundation complete
+🔄 Part 2 — Silver layer complete
+
+### Progress Log
+- 2026-03-22 — Explored raw Kaggle dataset (3,653 Delhi rows, 2015–2024)
+- 2026-03-22 — Built Bronze → Silver transformation in Databricks
+- 2026-03-22 — Recalculated AQI from PM2.5 (original AQI unreliable)
+- 2026-03-22 — Added event flags (Diwali, crop burning, COVID, odd-even)
+- 2026-03-22 — Silver Delta table saved (3,653 rows, 24 columns)
 
 ## 👤 Author
 Jogendra Varma Mogasati  
