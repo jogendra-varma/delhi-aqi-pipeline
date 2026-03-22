@@ -1,0 +1,559 @@
+{
+ "cells": [
+  {
+   "cell_type": "code",
+   "execution_count": 0,
+   "metadata": {
+    "application/vnd.databricks.v1+cell": {
+     "cellMetadata": {
+      "byteLimit": 2048000,
+      "rowLimit": 10000
+     },
+     "inputWidgets": {},
+     "nuid": "3efd8c7e-1529-40a6-9ed0-e785e3399969",
+     "showTitle": true,
+     "tableResultSettingsMap": {},
+     "title": "Cell 1"
+    }
+   },
+   "outputs": [
+    {
+     "output_type": "stream",
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "Total Rows: 18265\nTotal Columns: 16\n+---------+----------+-----+-----+-----+----+-----+----+----+----+-----+-------+-------+------+-----+------------+\n|     City|  Datetime|PM2.5| PM10|   NO| NO2|  NOx| NH3|  CO| SO2|   O3|Benzene|Toluene|Xylene|  AQI|  AQI_Bucket|\n+---------+----------+-----+-----+-----+----+-----+----+----+----+-----+-------+-------+------+-----+------------+\n|    Delhi|2015-01-01|153.3|241.7|182.9|33.0| 81.3|38.5|1.87|64.5| 83.6|  18.93|  20.81|  8.32|204.5|      Severe|\n|   Mumbai|2015-01-01| 70.5|312.7|195.0|42.0|122.5|31.5|7.22|83.8|108.0|   2.01|  19.41|  2.86| 60.9|Satisfactory|\n|  Chennai|2015-01-01|174.1|275.4| 56.2|68.8|230.9|28.5|8.56|60.8| 43.9|  19.07|  10.19|  9.63|486.5|      Severe|\n|  Kolkata|2015-01-01|477.2|543.9| 14.1|76.4|225.9|45.6|2.41|42.1|171.1|   9.31|  11.65|  9.39|174.4|   Very Poor|\n|Bangalore|2015-01-01|171.6|117.7|123.3|12.4| 61.9|49.7|1.26|79.7|164.3|   6.04|  12.74|  9.59|489.7|        Good|\n+---------+----------+-----+-----+-----+----+-----+----+----+----+-----+-------+-------+------+-----+------------+\nonly showing top 5 rows\n"
+     ]
+    }
+   ],
+   "source": [
+    "%skip\n",
+    "# Load raw dataset\n",
+    "df = spark.read.format(\"csv\")\\\n",
+    "    .option(\"header\", \"true\")\\\n",
+    "    .option(\"inferSchema\", \"true\")\\\n",
+    "    .load(\"/Workspace/Users/mjogendravarma@gmail.com/Drafts/city_day.csv\")\n",
+    "\n",
+    "# Basic check\n",
+    "print(f\"Total Rows: {df.count()}\")\n",
+    "print(f\"Total Columns: {len(df.columns)}\")\n",
+    "df.show(5)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 0,
+   "metadata": {
+    "application/vnd.databricks.v1+cell": {
+     "cellMetadata": {
+      "byteLimit": 2048000,
+      "rowLimit": 10000
+     },
+     "inputWidgets": {},
+     "nuid": "7e62a478-ede7-4152-a98d-271dd862d826",
+     "showTitle": false,
+     "tableResultSettingsMap": {},
+     "title": ""
+    }
+   },
+   "outputs": [
+    {
+     "output_type": "stream",
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "Delhi Rows: 3653\n+-----+----------+-----+-----+-----+-----+-----+----+----+----+-----+-------+-------+------+-----+------------+\n| City|  Datetime|PM2.5| PM10|   NO|  NO2|  NOx| NH3|  CO| SO2|   O3|Benzene|Toluene|Xylene|  AQI|  AQI_Bucket|\n+-----+----------+-----+-----+-----+-----+-----+----+----+----+-----+-------+-------+------+-----+------------+\n|Delhi|2015-01-01|153.3|241.7|182.9| 33.0| 81.3|38.5|1.87|64.5| 83.6|  18.93|  20.81|  8.32|204.5|      Severe|\n|Delhi|2015-01-02|344.2|173.2|179.8|128.4|156.1|15.6|6.28| 7.5|  9.4|   0.55|   15.6|  2.45|238.5|Satisfactory|\n|Delhi|2015-01-03|473.9| 20.1| 12.7|102.7|244.7|42.5|0.04|29.8| 42.0|   1.87|  15.11|  2.41| 77.6|Satisfactory|\n|Delhi|2015-01-04| 32.4|414.8|198.1| 25.6|218.2|13.2|2.47|50.4| 80.2|    7.7|  12.46|  0.57| 85.4|Satisfactory|\n|Delhi|2015-01-05|312.8|155.8|143.1|106.8|  6.1| 4.9|4.04| 2.0|101.3|  13.41|   1.66|  4.46|396.8|        Poor|\n+-----+----------+-----+-----+-----+-----+-----+----+----+----+-----+-------+-------+------+-----+------------+\nonly showing top 5 rows\n"
+     ]
+    }
+   ],
+   "source": [
+    "# Filter Delhi only\n",
+    "delhi_df = df.filter(df.City == \"Delhi\")\n",
+    "print(f\"Delhi Rows: {delhi_df.count()}\")\n",
+    "delhi_df.show(5)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 0,
+   "metadata": {
+    "application/vnd.databricks.v1+cell": {
+     "cellMetadata": {
+      "byteLimit": 2048000,
+      "rowLimit": 10000
+     },
+     "inputWidgets": {},
+     "nuid": "23aa641a-a415-4362-82cb-28db49731624",
+     "showTitle": false,
+     "tableResultSettingsMap": {},
+     "title": ""
+    }
+   },
+   "outputs": [
+    {
+     "output_type": "stream",
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "+-------------+-----------+\n|Earliest Date|Latest Date|\n+-------------+-----------+\n|   2015-01-01| 2024-12-31|\n+-------------+-----------+\n\n"
+     ]
+    }
+   ],
+   "source": [
+    "# Check date range — how far back does Delhi data go\n",
+    "from pyspark.sql.functions import min, max\n",
+    "delhi_df.select(\n",
+    "    min(\"Datetime\").alias(\"Earliest Date\"),\n",
+    "    max(\"Datetime\").alias(\"Latest Date\")\n",
+    ").show()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 0,
+   "metadata": {
+    "application/vnd.databricks.v1+cell": {
+     "cellMetadata": {
+      "byteLimit": 2048000,
+      "rowLimit": 10000
+     },
+     "inputWidgets": {},
+     "nuid": "d9b4605f-104b-452b-a287-320521cd212b",
+     "showTitle": false,
+     "tableResultSettingsMap": {},
+     "title": ""
+    }
+   },
+   "outputs": [
+    {
+     "output_type": "stream",
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "+----+--------+-----+----+---+---+---+---+---+---+---+-------+-------+------+---+----------+\n|City|Datetime|PM2.5|PM10| NO|NO2|NOx|NH3| CO|SO2| O3|Benzene|Toluene|Xylene|AQI|AQI_Bucket|\n+----+--------+-----+----+---+---+---+---+---+---+---+-------+-------+------+---+----------+\n|   0|       0|    0|   0|  0|  0|  0|  0|  0|  0|  0|      0|      0|     0|  0|         0|\n+----+--------+-----+----+---+---+---+---+---+---+---+-------+-------+------+---+----------+\n\n"
+     ]
+    }
+   ],
+   "source": [
+    "# Check nulls per column in Delhi data\n",
+    "from pyspark.sql.functions import col, sum as spark_sum\n",
+    "\n",
+    "null_counts = delhi_df.select([\n",
+    "    spark_sum(col(f\"`{c}`\").isNull().cast(\"int\")).alias(c) \n",
+    "    for c in delhi_df.columns\n",
+    "])\n",
+    "null_counts.show()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 0,
+   "metadata": {
+    "application/vnd.databricks.v1+cell": {
+     "cellMetadata": {
+      "byteLimit": 2048000,
+      "rowLimit": 10000
+     },
+     "inputWidgets": {},
+     "nuid": "21b759e9-a0be-4bd8-bcda-2f0ddfed492e",
+     "showTitle": false,
+     "tableResultSettingsMap": {},
+     "title": ""
+    }
+   },
+   "outputs": [
+    {
+     "output_type": "stream",
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "['city', 'date', 'pm25', 'pm10', 'no', 'no2', 'nox', 'nh3', 'co', 'so2', 'o3', 'benzene', 'toluene', 'xylene', 'aqi_original', 'aqi_bucket_original']\n"
+     ]
+    }
+   ],
+   "source": [
+    "# Rename all columns to remove dots and standardise\n",
+    "delhi_clean = delhi_df \\\n",
+    "    .withColumnRenamed(\"PM2.5\", \"pm25\") \\\n",
+    "    .withColumnRenamed(\"PM10\", \"pm10\") \\\n",
+    "    .withColumnRenamed(\"NO\", \"no\") \\\n",
+    "    .withColumnRenamed(\"NO2\", \"no2\") \\\n",
+    "    .withColumnRenamed(\"NOx\", \"nox\") \\\n",
+    "    .withColumnRenamed(\"NH3\", \"nh3\") \\\n",
+    "    .withColumnRenamed(\"CO\", \"co\") \\\n",
+    "    .withColumnRenamed(\"SO2\", \"so2\") \\\n",
+    "    .withColumnRenamed(\"O3\", \"o3\") \\\n",
+    "    .withColumnRenamed(\"Benzene\", \"benzene\") \\\n",
+    "    .withColumnRenamed(\"Toluene\", \"toluene\") \\\n",
+    "    .withColumnRenamed(\"Xylene\", \"xylene\") \\\n",
+    "    .withColumnRenamed(\"AQI\", \"aqi_original\") \\\n",
+    "    .withColumnRenamed(\"AQI_Bucket\", \"aqi_bucket_original\") \\\n",
+    "    .withColumnRenamed(\"City\", \"city\") \\\n",
+    "    .withColumnRenamed(\"Datetime\", \"date\")\n",
+    "\n",
+    "# Confirm new column names\n",
+    "print(delhi_clean.columns)\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 0,
+   "metadata": {
+    "application/vnd.databricks.v1+cell": {
+     "cellMetadata": {
+      "byteLimit": 2048000,
+      "rowLimit": 10000
+     },
+     "inputWidgets": {},
+     "nuid": "b4332c6e-c6a2-4a21-aa72-10e1e99dd4f3",
+     "showTitle": false,
+     "tableResultSettingsMap": {},
+     "title": ""
+    }
+   },
+   "outputs": [
+    {
+     "output_type": "stream",
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "+-------+------------------+------------------+-----------------+------------------+------------------+\n|summary|              pm25|              pm10|              no2|                co|      aqi_original|\n+-------+------------------+------------------+-----------------+------------------+------------------+\n|  count|              3653|              3653|             3653|              3653|              3653|\n|   mean|252.90585819874053| 297.4268546400221|75.91147002463723| 4.976162058581991| 251.4963044073366|\n| stddev|141.85804575840945|173.63645138508696|43.33645045401666|2.8865082443127674|143.66591497633794|\n|    min|               0.2|               0.3|              0.0|               0.0|               0.2|\n|    max|             499.8|             600.0|            150.0|              10.0|             499.9|\n+-------+------------------+------------------+-----------------+------------------+------------------+\n\n"
+     ]
+    }
+   ],
+   "source": [
+    "# Now describe works perfectly\n",
+    "delhi_clean.select(\n",
+    "    \"pm25\", \"pm10\", \"no2\", \"co\", \"aqi_original\"\n",
+    ").describe().show()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 0,
+   "metadata": {
+    "application/vnd.databricks.v1+cell": {
+     "cellMetadata": {
+      "byteLimit": 2048000,
+      "rowLimit": 10000
+     },
+     "inputWidgets": {},
+     "nuid": "107f4efe-085a-4570-8155-03f832b7c463",
+     "showTitle": false,
+     "tableResultSettingsMap": {},
+     "title": ""
+    }
+   },
+   "outputs": [
+    {
+     "output_type": "stream",
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "+----------+-----+----+-------+--------+-----------+-----------+\n|      date| pm25|  co|co_ugm3|is_valid|season_flag|data_source|\n+----------+-----+----+-------+--------+-----------+-----------+\n|2015-01-01|153.3|1.87| 1870.0|    true|     winter|     kaggle|\n|2015-01-02|344.2|6.28| 6280.0|    true|     winter|     kaggle|\n|2015-01-03|473.9|0.04|   40.0|    true|     winter|     kaggle|\n|2015-01-04| 32.4|2.47| 2470.0|    true|     winter|     kaggle|\n|2015-01-05|312.8|4.04| 4040.0|    true|     winter|     kaggle|\n|2015-01-06|390.7|1.17| 1170.0|    true|     winter|     kaggle|\n|2015-01-07|282.3|1.15| 1150.0|    true|     winter|     kaggle|\n|2015-01-08|315.2|6.81| 6810.0|    true|     winter|     kaggle|\n|2015-01-09|226.8|9.29| 9290.0|    true|     winter|     kaggle|\n|2015-01-10|316.8|3.37| 3370.0|    true|     winter|     kaggle|\n+----------+-----+----+-------+--------+-----------+-----------+\nonly showing top 10 rows\n"
+     ]
+    }
+   ],
+   "source": [
+    "from pyspark.sql.functions import (\n",
+    "    col, when, lit, month, to_date\n",
+    ")\n",
+    "\n",
+    "silver_df = delhi_clean \\\n",
+    "    .withColumn(\"date\", to_date(col(\"date\"), \"yyyy-MM-dd\")) \\\n",
+    "    .withColumn(\"co_ugm3\", col(\"co\") * 1000) \\\n",
+    "    .withColumn(\"is_valid\", \n",
+    "        when(\n",
+    "            (col(\"pm25\") < 1) | \n",
+    "            (col(\"pm10\") > 500) | \n",
+    "            (col(\"aqi_original\") < 1), \n",
+    "            False\n",
+    "        ).otherwise(True)\n",
+    "    ) \\\n",
+    "    .withColumn(\"data_source\", lit(\"kaggle\")) \\\n",
+    "    .withColumn(\"data_granularity\", lit(\"daily\")) \\\n",
+    "    .withColumn(\"season_flag\",\n",
+    "        when(month(col(\"date\")).isin(12, 1, 2), \"winter\")\n",
+    "        .when(month(col(\"date\")).isin(3, 4, 5), \"summer\")\n",
+    "        .when(month(col(\"date\")).isin(6, 7, 8, 9), \"monsoon\")\n",
+    "        .otherwise(\"post_monsoon\")\n",
+    "    )\n",
+    "\n",
+    "# Check result\n",
+    "silver_df.select(\n",
+    "    \"date\", \"pm25\", \"co\", \"co_ugm3\", \n",
+    "    \"is_valid\", \"season_flag\", \"data_source\"\n",
+    ").show(10)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 0,
+   "metadata": {
+    "application/vnd.databricks.v1+cell": {
+     "cellMetadata": {
+      "byteLimit": 2048000,
+      "rowLimit": 10000
+     },
+     "inputWidgets": {},
+     "nuid": "41003744-8898-41a1-87e1-9e9a5b0cd5e3",
+     "showTitle": false,
+     "tableResultSettingsMap": {},
+     "title": ""
+    }
+   },
+   "outputs": [
+    {
+     "output_type": "stream",
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "+----------+-----+------------+----------------+---------------+\n|      date| pm25|aqi_original|is_diwali_window|is_crop_burning|\n+----------+-----+------------+----------------+---------------+\n|2015-10-24|424.2|       314.4|            true|           true|\n|2015-10-25| 48.5|       212.1|            true|           true|\n|2015-10-26|217.4|        48.5|            true|           true|\n|2015-10-27|179.0|       112.5|            true|           true|\n|2015-10-28|157.1|       225.2|            true|           true|\n|2015-10-29|171.1|       428.8|            true|           true|\n|2015-10-30| 38.1|       181.4|            true|           true|\n|2015-11-24|341.0|       104.9|            true|           true|\n|2015-11-25|407.0|        18.4|            true|           true|\n|2015-11-26| 42.1|       476.4|            true|           true|\n+----------+-----+------------+----------------+---------------+\nonly showing top 10 rows\n"
+     ]
+    }
+   ],
+   "source": [
+    "from pyspark.sql.functions import dayofyear, year, dayofmonth\n",
+    "\n",
+    "silver_df = silver_df \\\n",
+    "    .withColumn(\"is_diwali_window\",\n",
+    "        when(\n",
+    "            (month(col(\"date\")).isin(10, 11)) &\n",
+    "            (dayofmonth(col(\"date\")).between(24, 30)),\n",
+    "            True\n",
+    "        ).otherwise(False)\n",
+    "    ) \\\n",
+    "    .withColumn(\"is_crop_burning\",\n",
+    "        when(\n",
+    "            month(col(\"date\")).isin(10, 11),\n",
+    "            True\n",
+    "        ).otherwise(False)\n",
+    "    ) \\\n",
+    "    .withColumn(\"is_covid_lockdown\",\n",
+    "        when(\n",
+    "            (col(\"date\") >= \"2020-03-25\") &\n",
+    "            (col(\"date\") <= \"2020-05-31\"),\n",
+    "            True\n",
+    "        ).otherwise(False)\n",
+    "    ) \\\n",
+    "    .withColumn(\"is_odd_even\",\n",
+    "        when(\n",
+    "            ((col(\"date\") >= \"2019-11-04\") &\n",
+    "            (col(\"date\") <= \"2019-11-15\")) |\n",
+    "            ((col(\"date\") >= \"2016-04-15\") &\n",
+    "            (col(\"date\") <= \"2016-04-30\")),\n",
+    "            True\n",
+    "        ).otherwise(False)\n",
+    "    )\n",
+    "\n",
+    "# Verify event flags\n",
+    "silver_df.filter(\n",
+    "    col(\"is_diwali_window\") == True\n",
+    ").select(\n",
+    "    \"date\", \"pm25\", \"aqi_original\", \n",
+    "    \"is_diwali_window\", \"is_crop_burning\"\n",
+    ").show(10)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 0,
+   "metadata": {
+    "application/vnd.databricks.v1+cell": {
+     "cellMetadata": {
+      "byteLimit": 2048000,
+      "rowLimit": 10000
+     },
+     "inputWidgets": {},
+     "nuid": "566aded3-a2e6-4ed9-9f74-0e3e1b0e0327",
+     "showTitle": false,
+     "tableResultSettingsMap": {},
+     "title": ""
+    }
+   },
+   "outputs": [
+    {
+     "output_type": "stream",
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "+----------+-----+------------+--------------+---------------------+\n|      date| pm25|aqi_original|aqi_calculated|aqi_bucket_calculated|\n+----------+-----+------------+--------------+---------------------+\n|2015-01-01|153.3|       204.5|         326.4|            Very Poor|\n|2015-01-02|344.2|       238.5|         438.3|               Severe|\n|2015-01-03|473.9|        77.6|         489.7|               Severe|\n|2015-01-04| 32.4|        85.4|          54.9|         Satisfactory|\n|2015-01-05|312.8|       396.8|         425.9|               Severe|\n|2015-01-06|390.7|       360.3|         456.7|               Severe|\n|2015-01-07|282.3|       370.3|         413.8|               Severe|\n|2015-01-08|315.2|       230.7|         426.8|               Severe|\n|2015-01-09|226.8|        53.6|         382.3|            Very Poor|\n|2015-01-10|316.8|        29.9|         427.5|               Severe|\n+----------+-----+------------+--------------+---------------------+\nonly showing top 10 rows\n"
+     ]
+    }
+   ],
+   "source": [
+    "from pyspark.sql.functions import round as spark_round\n",
+    "\n",
+    "def calculate_aqi_pm25(pm25):\n",
+    "    # CPCB Breakpoints for PM2.5\n",
+    "    # (C_low, C_high, AQI_low, AQI_high)\n",
+    "    breakpoints = [\n",
+    "        (0,    30,   0,   50),\n",
+    "        (30,   60,   51,  100),\n",
+    "        (60,   90,   101, 200),\n",
+    "        (90,   120,  201, 300),\n",
+    "        (120,  250,  301, 400),\n",
+    "        (250,  500,  401, 500),\n",
+    "    ]\n",
+    "    \n",
+    "    result = None\n",
+    "    for c_low, c_high, aqi_low, aqi_high in breakpoints:\n",
+    "        if c_low <= pm25 <= c_high:\n",
+    "            result = ((aqi_high - aqi_low) / \n",
+    "                     (c_high - c_low)) * \\\n",
+    "                     (pm25 - c_low) + aqi_low\n",
+    "            break\n",
+    "    return float(result) if result else 500.0\n",
+    "\n",
+    "# Register as Spark UDF\n",
+    "from pyspark.sql.types import FloatType\n",
+    "from pyspark.sql.functions import udf\n",
+    "\n",
+    "aqi_udf = udf(calculate_aqi_pm25, FloatType())\n",
+    "\n",
+    "# Apply to dataframe\n",
+    "silver_df = silver_df.withColumn(\n",
+    "    \"aqi_calculated\", \n",
+    "    spark_round(aqi_udf(col(\"pm25\")), 1)\n",
+    ").withColumn(\n",
+    "    \"aqi_bucket_calculated\",\n",
+    "    when(col(\"aqi_calculated\") <= 50,  \"Good\")\n",
+    "    .when(col(\"aqi_calculated\") <= 100, \"Satisfactory\")\n",
+    "    .when(col(\"aqi_calculated\") <= 200, \"Moderate\")\n",
+    "    .when(col(\"aqi_calculated\") <= 300, \"Poor\")\n",
+    "    .when(col(\"aqi_calculated\") <= 400, \"Very Poor\")\n",
+    "    .otherwise(\"Severe\")\n",
+    ")\n",
+    "\n",
+    "# Compare original vs calculated\n",
+    "silver_df.select(\n",
+    "    \"date\", \"pm25\", \n",
+    "    \"aqi_original\", \n",
+    "    \"aqi_calculated\",\n",
+    "    \"aqi_bucket_calculated\"\n",
+    ").show(10)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 0,
+   "metadata": {
+    "application/vnd.databricks.v1+cell": {
+     "cellMetadata": {
+      "byteLimit": 2048000,
+      "rowLimit": 10000
+     },
+     "inputWidgets": {},
+     "nuid": "dd447ea8-2a97-453b-af3b-4ae0ebe44ab7",
+     "showTitle": false,
+     "tableResultSettingsMap": {},
+     "title": ""
+    }
+   },
+   "outputs": [
+    {
+     "output_type": "stream",
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "Silver layer saved as Delta table\nRows: 3653\nColumns: 24\n"
+     ]
+    }
+   ],
+   "source": [
+    "# Select final Silver layer columns\n",
+    "silver_final = silver_df.select(\n",
+    "    \"date\",\n",
+    "    \"city\",\n",
+    "    \"pm25\",\n",
+    "    \"pm10\",\n",
+    "    \"no\",\n",
+    "    \"no2\",\n",
+    "    \"nox\",\n",
+    "    \"nh3\",\n",
+    "    \"co_ugm3\",\n",
+    "    \"so2\",\n",
+    "    \"o3\",\n",
+    "    \"benzene\",\n",
+    "    \"toluene\",\n",
+    "    \"xylene\",\n",
+    "    \"aqi_calculated\",\n",
+    "    \"aqi_bucket_calculated\",\n",
+    "    \"season_flag\",\n",
+    "    \"is_diwali_window\",\n",
+    "    \"is_crop_burning\",\n",
+    "    \"is_covid_lockdown\",\n",
+    "    \"is_odd_even\",\n",
+    "    \"is_valid\",\n",
+    "    \"data_source\",\n",
+    "    \"data_granularity\"\n",
+    ")\n",
+    "\n",
+    "# Save as Delta table instead of CSV\n",
+    "silver_final.write \\\n",
+    "    .mode(\"overwrite\") \\\n",
+    "    .format(\"delta\") \\\n",
+    "    .saveAsTable(\"silver_delhi\")\n",
+    "\n",
+    "print(f\"Silver layer saved as Delta table\")\n",
+    "print(f\"Rows: {silver_final.count()}\")\n",
+    "print(f\"Columns: {len(silver_final.columns)}\")"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 0,
+   "metadata": {
+    "application/vnd.databricks.v1+cell": {
+     "cellMetadata": {
+      "byteLimit": 2048000,
+      "rowLimit": 10000
+     },
+     "inputWidgets": {},
+     "nuid": "1909c862-7096-4254-b72f-dc353f2f8b1f",
+     "showTitle": false,
+     "tableResultSettingsMap": {},
+     "title": ""
+    }
+   },
+   "outputs": [
+    {
+     "output_type": "stream",
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "Rows in table: 3653\n+----------+-----+-----+-----+-----+-----+-----+----+-------+----+-----+-------+-------+------+--------------+---------------------+-----------+----------------+---------------+-----------------+-----------+--------+-----------+----------------+\n|      date| city| pm25| pm10|   no|  no2|  nox| nh3|co_ugm3| so2|   o3|benzene|toluene|xylene|aqi_calculated|aqi_bucket_calculated|season_flag|is_diwali_window|is_crop_burning|is_covid_lockdown|is_odd_even|is_valid|data_source|data_granularity|\n+----------+-----+-----+-----+-----+-----+-----+----+-------+----+-----+-------+-------+------+--------------+---------------------+-----------+----------------+---------------+-----------------+-----------+--------+-----------+----------------+\n|2015-01-01|Delhi|153.3|241.7|182.9| 33.0| 81.3|38.5| 1870.0|64.5| 83.6|  18.93|  20.81|  8.32|         326.4|            Very Poor|     winter|           false|          false|            false|      false|    true|     kaggle|           daily|\n|2015-01-02|Delhi|344.2|173.2|179.8|128.4|156.1|15.6| 6280.0| 7.5|  9.4|   0.55|   15.6|  2.45|         438.3|               Severe|     winter|           false|          false|            false|      false|    true|     kaggle|           daily|\n|2015-01-03|Delhi|473.9| 20.1| 12.7|102.7|244.7|42.5|   40.0|29.8| 42.0|   1.87|  15.11|  2.41|         489.7|               Severe|     winter|           false|          false|            false|      false|    true|     kaggle|           daily|\n|2015-01-04|Delhi| 32.4|414.8|198.1| 25.6|218.2|13.2| 2470.0|50.4| 80.2|    7.7|  12.46|  0.57|          54.9|         Satisfactory|     winter|           false|          false|            false|      false|    true|     kaggle|           daily|\n|2015-01-05|Delhi|312.8|155.8|143.1|106.8|  6.1| 4.9| 4040.0| 2.0|101.3|  13.41|   1.66|  4.46|         425.9|               Severe|     winter|           false|          false|            false|      false|    true|     kaggle|           daily|\n+----------+-----+-----+-----+-----+-----+-----+----+-------+----+-----+-------+-------+------+--------------+---------------------+-----------+----------------+---------------+-----------------+-----------+--------+-----------+----------------+\nonly showing top 5 rows\n"
+     ]
+    }
+   ],
+   "source": [
+    "# Read it back to confirm\n",
+    "verify_df = spark.table(\"silver_delhi\")\n",
+    "print(f\"Rows in table: {verify_df.count()}\")\n",
+    "verify_df.show(5)"
+   ]
+  }
+ ],
+ "metadata": {
+  "application/vnd.databricks.v1+notebook": {
+   "computePreferences": null,
+   "dashboards": [],
+   "environmentMetadata": {
+    "base_environment": "",
+    "environment_version": "5"
+   },
+   "inputWidgetPreferences": null,
+   "language": "python",
+   "notebookMetadata": {
+    "pythonIndentUnit": 4
+   },
+   "notebookName": "B2S",
+   "widgets": {}
+  },
+  "language_info": {
+   "name": "python"
+  }
+ },
+ "nbformat": 4,
+ "nbformat_minor": 0
+}
