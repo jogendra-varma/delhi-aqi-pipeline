@@ -5,18 +5,13 @@ on:
     - cron: '0 18 * * *'
   workflow_dispatch:
 
-# FIX: Force runner environments globally to target Node 24 to clear legacy deprecation warnings
-env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
-
 jobs:
   run-pipeline:
     runs-on: ubuntu-latest
 
     steps:
-    # Use the absolute latest checkout tag optimized for new Node runtimes
     - name: Checkout Repository Code
-      uses: actions/checkout@v4.2.2  
+      uses: actions/checkout@v4.2.2
 
     - name: Set Up Python Runtime Engine
       uses: actions/setup-python@v5.3.0
