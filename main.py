@@ -7,7 +7,6 @@ from datetime import datetime, timedelta
 
 def extract_live_api_data():
     """Fetches real historical and daily air quality metrics for Delhi via Open-Meteo."""
-    # Fetch data for yesterday to ensure full 24-hour reading sets are finalized in the archive
     yesterday = (datetime.now() - timedelta(days=1)).strftime('%Y-%m-%d')
     
     url = "https://archive-api.open-meteo.com/v1/archive"
@@ -28,7 +27,6 @@ def extract_live_api_data():
     data = response.json()
     hourly_data = data["hourly"]
     
-    # Create DataFrame from raw hourly API streams
     df_hourly = pd.DataFrame({
         "timestamp": pd.to_datetime(hourly_data["time"]),
         "pm25": hourly_data["pm2_5"],
@@ -36,7 +34,6 @@ def extract_live_api_data():
         "wind": hourly_data["wind_speed_10m"]
     })
     
-    # Aggregate 24 hourly rows into 1 summarized daily record (Data Engineering best practice)
     df_daily = df_hourly.groupby(df_hourly["timestamp"].dt.date).agg({
         "pm25": "mean",
         "temp": "mean",
@@ -53,7 +50,7 @@ def extract_live_api_data():
     return df_daily
 
 def calculate_cpcb_aqi(pm25):
-    """Piecewise linear interpolation formula for Indian CPCB AQI standards."""
+    """Piecewise linear interpolation for Indian CPCB AQI standards."""
     if pd.isna(pm25) or pm25 < 0: return None, "Unknown"
     if pm25 <= 30: return int(((50 - 0) / (30 - 0)) * (pm25 - 0) + 0), "Good"
     elif pm25 <= 60: return int(((100 - 51) / (60 - 30)) * (pm25 - 30) + 51), "Satisfactory"
@@ -65,18 +62,20 @@ def calculate_cpcb_aqi(pm25):
         return min(500, aqi_val), "Severe"
 
 def main():
-    # Fetch the secret token safely from the GitHub runner environment memory
     db_url = os.environ.get("NEON_DATABASE_URL")
     if not db_url:
         print("CRITICAL ERROR: Environment variable NEON_DATABASE_URL is missing!")
         sys.exit(1)
+        
+    # FORCE PSYC0PG2 driver prefix to keep modern SQLAlchemy dialect lookups stable
+    if db_url.startswith("postgresql://"):
+        db_url = db_url.replace("postgresql://", "postgresql+psycopg2://", 1)
         
     engine = create_engine(db_url)
     
     print("Extracting live weather and pollution metrics from Open-Meteo...")
     clean_df = extract_live_api_data()
     
-    # Transform using statutory guidelines
     clean_df['pm25_cleaned'] = clean_df['raw_pm25'].astype(float)
     clean_df[['calculated_aqi', 'aqi_bucket']] = clean_df['pm25_cleaned'].apply(lambda x: pd.Series(calculate_cpcb_aqi(x)))
     clean_df['is_covid_lockdown'] = 0
@@ -102,7 +101,7 @@ def main():
                     wind_speed_kms = EXCLUDED.wind_speed_kms;
             """), row.to_dict())
             
-    print("🚀 Pipeline run successful! Warehouse states synchronized seamlessly.")
+    print("🚀 Pipeline run successful! Live records synchronized with Node 24 runner specifications.")
 
 if __name__ == "__main__":
     main()
