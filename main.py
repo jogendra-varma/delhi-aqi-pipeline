@@ -67,15 +67,22 @@ def main():
         print("CRITICAL ERROR: Environment variable NEON_DATABASE_URL is missing!")
         sys.exit(1)
         
-    # FORCE PSYC0PG2 driver prefix to keep modern SQLAlchemy dialect lookups stable
     if db_url.startswith("postgresql://"):
         db_url = db_url.replace("postgresql://", "postgresql+psycopg2://", 1)
         
     engine = create_engine(db_url)
     
     print("Extracting live weather and pollution metrics from Open-Meteo...")
-    clean_df = extract_live_api_data()
+    raw_df = extract_live_api_data()
     
+    # 🧼 DATA HYGIENE GATE: Remove rows where raw PM2.5 is null or NaN BEFORE processing
+    clean_df = raw_df.dropna(subset=['raw_pm25']).copy()
+    
+    if clean_df.empty:
+        print("⚠️ WARNING: API payload contains no valid PM2.5 metrics for this date range. Skipping database commit.")
+        sys.exit(0) # Exits gracefully with a green checkmark since there's no actionable work
+        
+    # COMPUTATION LAYER
     clean_df['pm25_cleaned'] = clean_df['raw_pm25'].astype(float)
     clean_df[['calculated_aqi', 'aqi_bucket']] = clean_df['pm25_cleaned'].apply(lambda x: pd.Series(calculate_cpcb_aqi(x)))
     clean_df['is_covid_lockdown'] = 0
@@ -101,7 +108,7 @@ def main():
                     wind_speed_kms = EXCLUDED.wind_speed_kms;
             """), row.to_dict())
             
-    print("🚀 Pipeline run successful! Live records synchronized with Node 24 runner specifications.")
+    print("🚀 Pipeline run successful! Warehouse states synchronized safely.")
 
 if __name__ == "__main__":
     main()
