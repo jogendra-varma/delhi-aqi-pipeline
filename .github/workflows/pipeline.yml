@@ -1,0 +1,31 @@
+name: Daily Delhi AQI Ingestion Pipeline
+
+on:
+  schedule:
+    - cron: '0 18 * * *'  # Automatically triggers every single night at 11:30 PM IST (18:00 UTC)
+  workflow_dispatch:      # Gives you a manual "Run" button to test it whenever you want
+
+jobs:
+  run-pipeline:
+    runs-on: ubuntu-latest  # Spins up a fresh, free Linux computer container in the cloud
+
+    steps:
+    - name: Checkout Repository Code
+      uses: actions/checkout@v4
+
+     Budgets-Setup-Runtimes
+    - name: Set Up Python Runtime Engine
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.10'
+
+    - name: Install Ingestion Libraries
+      run: |
+        pip install pandas numpy sqlalchemy psycopg2-binary requests
+
+    - name: Run Processing Engine
+      env:
+        # Injects your encrypted Neon connection password safely into memory
+        NEON_DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
+      run: |
+        python main.py
