@@ -14,10 +14,15 @@ st.set_page_config(
 @st.cache_resource
 def init_connection():
     """Establishes a cached connection pool to the Neon Postgres Data Warehouse."""
-    # Fetches from Streamlit's secure secrets manager
+    # Fetches from Streamlit's secure secrets layout manager
     db_url = st.secrets["NEON_DATABASE_URL"]
+    
+    # 🔥 PURE-PYTHON DRIVER SWAP: Enforce pg8000 prefix to remain fully stable on Python 3.14+
     if db_url.startswith("postgresql://"):
-        db_url = db_url.replace("postgresql://", "postgresql+psycopg2://", 1)
+        db_url = db_url.replace("postgresql://", "postgresql+pg8000://", 1)
+    elif db_url.startswith("postgresql+psycopg2://"):
+        db_url = db_url.replace("postgresql+psycopg2://", "postgresql+pg8000://", 1)
+        
     return create_engine(db_url)
 
 try:
@@ -29,7 +34,7 @@ except Exception as e:
 # 3. HIGH-PERFORMANCE DATA CACHING TIER
 @st.cache_data(ttl=3600)
 def load_warehouse_data(table_name):
-    """Fetches records from the serving layer with an explicit 1-hour cache TTL."""
+    """Fetches records from the serving layer with an explicit 1-hour time-to-live cache."""
     query = f"SELECT * FROM {table_name};"
     return pd.read_sql(query, con=engine)
 
@@ -96,6 +101,7 @@ with tab2:
     
     with col_left:
         st.markdown("**COVID-19 Lockdown Structural Density Split**")
+        # Isolate Lockdown averages vs standard windows
         lockdown_metrics = df_silver.groupby('is_covid_lockdown')['pm25_cleaned'].mean().reset_index()
         lockdown_metrics['is_covid_lockdown'] = lockdown_metrics['is_covid_lockdown'].map({1: "Active Lockdown", 0: "Standard Baseline"})
         st.dataframe(lockdown_metrics.rename(columns={'pm25_cleaned': 'Mean PM2.5 Value'}))
@@ -109,6 +115,7 @@ with tab2:
         st.caption("Validates vehicular emission reduction strategies against matching baselines.")
 
     st.markdown("#### Weather Variable Interdependence Metrics")
+    # Multi-Variate Scatter: Temperature vs Toxicity
     st.scatter_chart(data=df_silver, x='temperature_c', y='pm25_cleaned', color='aqi_bucket')
 
 # ================= Tab 3: Anomalies & Peak Toxicity Matrix =================
@@ -119,7 +126,9 @@ with tab3:
     This allows the UI to surface acute events instantly without scanning millions of historical transaction indices.
     """)
     
+    # Visual: Yearly Peak Bar Multi-Matrix
     st.bar_chart(data=df_gold_peaks, x='peak_year', y='max_pm25')
     
+    # Structural Table View Showcase
     st.markdown("**Gold Serving Tier Structural Data Inventory Representation**")
     st.dataframe(df_gold_peaks, use_container_width=True)
