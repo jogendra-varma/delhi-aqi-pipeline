@@ -36,7 +36,7 @@ def load_warehouse_data(table_name):
     """Fetches records safely using a bounded SQLAlchemy connectable transaction link."""
     query = f"SELECT * FROM {table_name};"
     
-    # 🔥 FIX: Bind the execution explicitly inside a clean connection context 
+    # 🔥 THE FIX: Bind the execution explicitly inside a clean connection context 
     # to protect modern SQLAlchemy 2.0 + pg8000 sessions from cursor breakdown errors
     with engine.connect() as connection:
         return pd.read_sql(query, con=connection)
